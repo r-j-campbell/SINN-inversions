@@ -1,3 +1,49 @@
+"""
+training_transformer.py
+
+Train a Transformer-based neural network to perform stratified spectropolarimetric inversion 
+using synthetic Stokes profiles and atmospheric parameters from a MANCHA simulation.
+
+Key functionality:
+- Loads MANCHA simulation data (Stokes profiles and model atmospheres) from FITS files.
+- Randomly samples spatial positions to form a profile training set (user can control the number of training samples).
+- Performs input and output standardisation using global statistics.
+  * Inputs are flattened Stokes vectors, later reshaped to (λ, 4) format for the transformer.
+  * Outputs include temperature, magnetic field strength, LOS velocity, and inclination
+    (standardised per optical depth), plus sin(2φ) and cos(2φ) for azimuth.
+- Splits into training and validation sets.
+- Defines and trains a Transformer model using mixed precision and early stopping.
+- Saves the best-performing model and associated scaling parameters.
+
+The script is run with a job index specifying a particular hyperparameter combination. This was used in a SLURM script on QUB's HPC. This functionality may not be necessary for you.
+This allows parallel execution across a hyperparameter grid.
+
+Usage:
+    python training_transformer.py --job_index <int>
+
+Model architecture:
+    The Transformer implementation is defined in architectures.py, which must be in the same directory, or in your Python path.
+
+Dependencies:
+    - astropy
+    - numpy
+    - torch
+    - sklearn
+
+Expected input files:
+    - MANCHA_ext_models.fits: Array of shape (11, N_tau, Ny, Nx)
+        * 11 atmospheric parameters (e.g. T, B, v, inclination, azimuth, etc., in the same order as a SIR/DeSIRe model file)
+        * N_tau: number of log(τ) depth layers
+        * Ny, Nx: spatial dimensions of the snapshot
+
+    - MANCHA_ext_profiles.fits: Array of shape (4, N_lambda, Ny, Nx)
+        * 4 Stokes parameters (I, Q, U, V)
+        * N_lambda: number of wavelength points
+        * Ny, Nx: same spatial dimensions as models file
+
+"""
+
+
 from astropy.io import fits
 import numpy as np
 from sklearn.model_selection import train_test_split
@@ -9,6 +55,8 @@ from itertools import product
 import os
 from torch.cuda.amp import autocast, GradScaler
 import time
+
+from architectures import SINN_Transformer_Sequence
 
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
 
@@ -129,8 +177,8 @@ target_output_scaled = np.stack((
     magnetic_field_output_scaled,
     velocity_output_scaled,
     inclination_output_scaled,
-    sin_2azimuth, #doesnt need scaled
-    cos_2azimuth #doesnt need scaled
+    sin_2azimuth, # sin(2ϕ) and cos(2ϕ) are already bounded between [-1, 1]; no scaling applied
+    cos_2azimuth 
 ), axis=-1)
 
 print("Stacked output shape:", target_output_scaled.shape)
@@ -168,52 +216,7 @@ def train_model(job_id, lr, batch_size, hidden_dim, seq_len, input_dim, num_laye
     print(f"[Job {job_id}] lr={lr} bs={batch_size} hd={hidden_dim} nl={num_layers} nh={num_heads}")
     job_start = time.perf_counter()
 
-    class SINN_Transformer_Sequence(nn.Module):
-        def __init__(self, seq_len, input_dim, n_tau, hidden_dim, num_layers=4, num_heads=4):
-            super().__init__()
-            self.hidden_dim = hidden_dim
-            self.n_tau = n_tau
-            self.seq_len = seq_len
-
-            self.embedding = nn.Linear(input_dim, hidden_dim)
-            self.positional_embedding = nn.Parameter(torch.randn(1, seq_len, hidden_dim))
-
-            encoder_layer = nn.TransformerEncoderLayer(
-                d_model=hidden_dim,
-                nhead=num_heads,
-                batch_first=True
-            )
-            self.encoder = nn.TransformerEncoder(encoder_layer, num_layers=num_layers)
-
-            decoder_layer = nn.TransformerDecoderLayer(
-                d_model=hidden_dim,
-                nhead=num_heads,
-                batch_first=True
-            )
-            self.decoder = nn.TransformerDecoder(decoder_layer, num_layers=num_layers)
-
-            self.query_content = nn.Parameter(torch.randn(n_tau, hidden_dim))     # learned content
-            self.depth_pos_enc = nn.Parameter(torch.randn(n_tau, hidden_dim))     # learned positional encoding
-
-            self.output_head = nn.Linear(hidden_dim, 6)
-
-        def forward(self, x):
-            # Encode the spectral sequence
-            x = self.embedding(x) + self.positional_embedding  # (batch, seq_len, hidden_dim)
-            memory = self.encoder(x)  # (batch, seq_len, hidden_dim)
-
-            # Prepare query with content + depth encoding
-            query = self.query_content + self.depth_pos_enc  # (n_tau, hidden_dim)
-            query = query.unsqueeze(0).expand(x.size(0), -1, -1)  # (batch, n_tau, hidden_dim)
-
-            # Cross-attend to encoder output
-            out = self.decoder(tgt=query, memory=memory)  # (batch, n_tau, hidden_dim)
-
-            return self.output_head(out)  # (batch, n_tau, 6)
-
-
-
-    # Initialize model
+    # Initialize model - SINN_Transformer_Sequence is imported from architectures.py
     model = SINN_Transformer_Sequence(seq_len, input_dim, num_optical_depths, hidden_dim, num_layers=num_layers, num_heads=num_heads).to(device)
     optimizer = torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=1e-4)
 
@@ -231,7 +234,7 @@ def train_model(job_id, lr, batch_size, hidden_dim, seq_len, input_dim, num_laye
     train_losses = []
 
     for epoch in range(max_epochs):
-        print(f"[Job {job_id}] Starting epoch {epoch+1}/{max_epochs}", f"GPU memory allocated: {torch.cuda.memory_allocated() / 1e9:.2f} GB")
+        print(f"[Job {job_id}] Starting epoch {epoch+1}/{max_epochs}")
         model.train()
         running_loss = 0.0
         for batch_X, batch_y in train_loader:
