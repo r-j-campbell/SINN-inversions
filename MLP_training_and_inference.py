@@ -1,5 +1,5 @@
 """
-training_mlp.py
+MLP_training_and_inference.py
 
 Train a multi-layer perceptron (MLP) to perform stratified spectropolarimetric inversion 
 using synthetic Stokes profiles (produced from a forward synthesis or inversion code) and atmospheric parameters from a MANCHA simulation.
