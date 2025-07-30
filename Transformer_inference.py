@@ -1,3 +1,47 @@
+"""
+Transformer_inference.py
+
+Run full-snapshot inference using a pre-trained Transformer model to recover atmospheric parameters 
+from synthetic Stokes profiles generated from a simulation snapshot not seen during training.
+
+Key functionality:
+- Loads a trained Transformer checkpoint with associated input/output scaling statistics (you should NOT use the new snapshot's scaling statistics!)
+- Reads Stokes I, Q, U, V profiles from a FITS file. 
+  * Input shape is (4, N_lambda, Ny, Nx).
+- Standardises input using stored global mean and standard deviation from training.
+- Performs inference in batches to avoid GPU memory issues.
+- Inverse-transforms the outputs to retrieve physical units:
+  * Temperature (K)
+  * Magnetic field strength (G)
+  * Line-of-sight velocity (cm/s)
+  * Magnetic inclination (deg)
+  * Magnetic azimuth (deg), derived from predicted sin(2φ), cos(2φ)
+- Saves the predicted maps to a FITS file in shape (5, N_tau, Ny, Nx).
+
+
+Usage:
+    python Transformer_inference.py
+
+Dependencies:
+    - astropy
+    - numpy
+    - torch
+
+Expected input files:
+    - model.pt: Checkpoint file containing:
+        * model_state_dict
+        * global_mean_X, global_std_X
+        * T/B/v/inclination means and stds
+        * training metadata (num_wavelengths, n_tau, hyperparameters)
+    - profiles: Shape (4, N_lambda, Ny, Nx)
+    - models: Used to extract Ny, Nx, N_tau (not directly used in inference)
+
+Output:
+    - predicted_atmosphere_maps.fits: Shape (5, N_tau, Ny, Nx)
+      with parameter order: [Temperature, B, v_los, inclination, azimuth]
+"""
+
+
 import os
 import numpy as np
 import torch
