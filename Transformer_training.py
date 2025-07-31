@@ -1,5 +1,5 @@
 """
-training_transformer.py
+Transformer_training.py
 
 Train a Transformer-based neural network to perform stratified spectropolarimetric inversion 
 using synthetic Stokes profiles and atmospheric parameters from a MANCHA simulation.
