@@ -69,8 +69,8 @@ print(f'Using device: {device}')
 output_dir = '/outputs'
 os.makedirs(output_dir, exist_ok=True)
 
-snapshot_path = '/inputs/MANCHA_ext_models.fits'
-stokes_path = '/inputs/MANCHA_ext_profiles.fits'
+snapshot_path = '/inputs/models_training.fits'
+stokes_path = '/inputs/profiles_training.fits'
 
 full_profiles = fits.getdata(stokes_path, memmap=False)  # (4, n_wave, ny, nx)
 full_models = fits.getdata(snapshot_path, memmap=False)  # (11, n_tau, ny, nx)
@@ -331,9 +331,7 @@ print(f"Saved model to: {model_filename}")
 
 # --- INFERENCE ON GENERALISATION SNAPSHOT ---
 print("Loading full snapshot for inference...")
-snapshot_path = '/inputs/MANCHA9_ext_models.fits' #90 seconds after test snapshot
-stokes_path = '/inputs/MANCHA9_ext_profiles.fits'
-snapshot_data = fits.getdata(snapshot_path)  # (11, n_tau, ny, nx)
+stokes_path = '/inputs/profiles_generalisation.fits'
 stokes_data = fits.getdata(stokes_path)      # (4, n_wave, ny, nx)
 
 # Crop wavelength range if needed (match training shape)
