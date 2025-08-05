@@ -34,7 +34,6 @@ Expected input files:
         * T/B/v/inclination means and stds
         * training metadata (num_wavelengths, n_tau, hyperparameters)
     - profiles: Shape (4, N_lambda, Ny, Nx)
-    - models: Used to extract Ny, Nx, N_tau (not directly used in inference)
 
 Output:
     - predicted_atmosphere_maps.fits: Shape (5, N_tau, Ny, Nx)
@@ -54,8 +53,7 @@ print("Starting Transformer inference script...")
 # === CONFIG ===
 output_dir = '/outputs'
 model_path = output_dir+'/model.pt'
-snapshot_path = '/inputs/MANCHA9_ext_models.fits' #different snapshot than one used for training!
-stokes_path = '/inputs/MANCHA9_ext_profiles.fits'
+stokes_path = '/inputs/profiles_generalisation.fits'
 fits_output_path = os.path.join(output_dir, "predicted_atmosphere_maps.fits")
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
