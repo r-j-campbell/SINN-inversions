@@ -19,7 +19,7 @@ The script is run with a job index specifying a particular hyperparameter combin
 This allows parallel execution across a hyperparameter grid.
 
 Usage:
-    python training_mlp.py --job_index <int>
+    python MLP_training_and_inference.py --job_index <int>
 
 Model architecture:
     The MLP implementation is defined in architectures.py, which must be in the same directory, or in your Python path.
