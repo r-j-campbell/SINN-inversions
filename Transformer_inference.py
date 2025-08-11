@@ -33,7 +33,7 @@ Expected input files:
         * global_mean_X, global_std_X
         * T/B/v/inclination means and stds
         * training metadata (num_wavelengths, n_tau, hyperparameters)
-    - profiles: Shape (4, N_lambda, Ny, Nx)
+    - profiles_generalisation.fits: Shape (4, N_lambda, Ny, Nx)
 
 Output:
     - predicted_atmosphere_maps.fits: Shape (5, N_tau, Ny, Nx)
