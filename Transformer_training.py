@@ -31,12 +31,12 @@ Dependencies:
     - sklearn
 
 Expected input files:
-    - MANCHA_ext_models.fits: Array of shape (11, N_tau, Ny, Nx)
+    - models_training.fits: Array of shape (11, N_tau, Ny, Nx)
         * 11 atmospheric parameters (e.g. T, B, v, inclination, azimuth, etc., in the same order as a SIR/DeSIRe model file)
         * N_tau: number of log(τ) depth layers
         * Ny, Nx: spatial dimensions of the snapshot
 
-    - MANCHA_ext_profiles.fits: Array of shape (4, N_lambda, Ny, Nx)
+    - profiles_training.fits: Array of shape (4, N_lambda, Ny, Nx)
         * 4 Stokes parameters (I, Q, U, V)
         * N_lambda: number of wavelength points
         * Ny, Nx: same spatial dimensions as models file
@@ -79,8 +79,8 @@ job_index = args.job_index
 output_dir = '/outputs'
 os.makedirs(output_dir, exist_ok=True)
 
-snapshot_path = '/inputs/MANCHA_ext_models.fits'
-stokes_path = '/inputs/MANCHA_ext_profiles.fits'
+snapshot_path = '/inputs/models_training.fits'
+stokes_path = '/inputs/profiles_training.fits'
 
 full_profiles = fits.getdata(stokes_path, memmap=False)  # (4, n_wave, ny, nx)
 full_models = fits.getdata(snapshot_path, memmap=False)  # (11, n_tau, ny, nx)
