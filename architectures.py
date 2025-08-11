@@ -17,6 +17,7 @@ class SINN_MLP(nn.Module):
 	    - This model is intended for regression. The inputs and outputs should be scaled before training,
 	      and inverse scaling should be applied after inference.
 	    - No activation function is applied after the final layer to allow unbounded real-valued outputs.
+	    - This version does not contain dropout.
 	"""
 	def __init__(self, input_dim, hidden_dim, output_dim, num_layers):
 		super().__init__()
