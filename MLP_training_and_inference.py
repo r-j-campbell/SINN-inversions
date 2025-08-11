@@ -137,7 +137,6 @@ cos_2azimuth = np.cos(2 * azimuth_rad)
 
 print("Extracted atm parameters")
 
-# Stack the outputs together: (4,000,000 pixels, 280 outputs)
 target_output = np.stack((
     temperature_output_mlp,
     magnetic_field_output_mlp,
@@ -290,7 +289,7 @@ def train_model(job_id, lr, batch_size, hidden_dim, num_layers, input_dim, outpu
 # Run parallel jobs
 learning_rates = [0.01, 1e-4, 3e-4]
 batch_sizes = [48]
-hidden_dims = [128, 256, 384, 512]
+hidden_dims = [128, 256, 384, 512, 1024, 2048]
 num_layers_list = [3, 4, 6, 8]  # or whatever range you want
 hyperparams = list(product(learning_rates, batch_sizes, hidden_dims, num_layers_list))
 
