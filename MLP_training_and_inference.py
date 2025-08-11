@@ -31,15 +31,16 @@ Dependencies:
     - sklearn
 
 Expected input files:
-    - MANCHA_ext_models.fits: Array of shape (11, N_tau, Ny, Nx)
+    - models_training.fits: Array of shape (11, N_tau, Ny, Nx)
         * 11 atmospheric parameters (e.g. T, B, v, inclination, azimuth, etc., in the same order as a SIR/DeSIRe model file)
         * N_tau: number of log(τ) depth layers
         * Ny, Nx: spatial dimensions of the snapshot
 
-    - MANCHA_ext_profiles.fits: Array of shape (4, N_lambda, Ny, Nx)
+    - profiles_training.fits: Array of shape (4, N_lambda, Ny, Nx)
         * 4 Stokes parameters (I, Q, U, V)
         * N_lambda: number of wavelength points
         * Ny, Nx: same spatial dimensions as models file
+    - profiles_generalisation.fits: Same as above, but for the generalisation test.
 """
 
 
