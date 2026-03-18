@@ -76,12 +76,12 @@ print(f"Model trained on {checkpoint['num_samples']} samples")
 print("Reading Stokes data from FITS...")
 stokes = fits.getdata(stokes_path, memmap=False)  # Shape: (4, n_wave, ny, nx)
 
-if stokes.shape[1] < num_wavelengths:
-    raise ValueError(f"Stokes input has fewer wavelengths ({stokes.shape[1]}) than expected ({num_wavelengths})")
+if stokes.shape[1] != num_wavelengths:
+    raise ValueError(f"Stokes input has {stokes.shape[1]} wavelengths but model expects {num_wavelengths}")
 
 print("Reshaping input to flat profile list...")
 ny, nx = stokes.shape[2], stokes.shape[3]
-X = stokes.reshape(4, num_wavelengths, -1).transpose(2, 0, 1).reshape(-1, 4 * num_wavelengths)
+X = stokes.transpose(2, 3, 1, 0).reshape(-1, num_wavelengths * 4)
 print("Flattened input shape:", X.shape)
 
 print("Converting to tensor first...")
