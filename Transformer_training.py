@@ -121,7 +121,7 @@ models = models[:, :, ~nan_mask]
 num_stokes, num_wavelengths, N = profiles.shape
 num_params, num_optical_depths, _ = models.shape
 
-stokes_input_mlp = profiles.transpose(2, 0, 1).reshape(N, num_stokes * num_wavelengths)
+stokes_input_mlp = profiles.transpose(2, 1, 0).reshape(N, num_wavelengths * num_stokes)
 print("Any NaNs before scaling?", np.isnan(stokes_input_mlp).any())
 
 # Select output atmospheric parameters (T, B, v, incl, sin(az), cos(az))
@@ -183,7 +183,7 @@ target_output_scaled = np.stack((
 print("Stacked output shape:", target_output_scaled.shape)
 
 # Reshape for transformer: (num_pixels, num_wavelengths, 4)
-stokes_input_transformer = stokes_input_scaled.reshape(-1, num_wavelengths, 4)
+stokes_input_transformer = stokes_input_scaled.reshape(N, num_wavelengths, num_stokes)
 print("Reshaped for transformer")
 
 assert not np.isnan(stokes_input_scaled).any(), "Input contains NaNs!"
